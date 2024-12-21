@@ -1,6 +1,6 @@
-# GRAPH-READING
+# cryptic
 
-A Python project for fetching and visualizing cryptocurrency data from the Coingecko, Binance, Coinmarketcap API.
+A Python project for fetching and visualizing cryptocurrency data from Coingecko API.
 
 ## Installation
 
