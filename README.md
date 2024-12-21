@@ -8,7 +8,7 @@ To set up the project locally, follow these steps:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/maicaalmonte/GRAPH-READING.git
+   git clone https://github.com/maicaalmonte/cryptic.git
    cd GRAPH-READING
 2. Create virtual environment
    ```bash
