@@ -1,6 +1,6 @@
-# cryptic
+# about ryptic
 
-Developed the backend infrastructure for a cryptocurrency data-fetching system using Flask, Python, and APScheduler, with plans to deploy as a fully functional web application. The system is designed to periodically fetch and display real-time cryptocurrency data for Bitcoin, Dogecoin, and Ethereum.
+Developed the backend infrastructure for a cryptocurrency data-fetching and analysis system using Flask, Python, and APScheduler, with plans to deploy as a fully functional web application. The system fetches and analyzes real-time cryptocurrency data for Bitcoin, Dogecoin, and Ethereum, providing insights on pricing trends.
 ## Installation
 
 To set up the project locally, follow these steps:
