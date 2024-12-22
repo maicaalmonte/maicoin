@@ -1,36 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>BTC Price</title>
-    <!-- Load Plotly.js from a CDN -->
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ crypto_id.capitalize() }} Price</title>
 </head>
 <body>
-    <h1>BTC Price Chart</h1>
-    <div id="chart"></div>
-
-    <script type="text/javascript">
-        // Pass data dynamically from Flask
-        var btcData = {{ btc_data | safe }};
-        var priceData = {{ price_data | safe }};
-
-        // Create a Plotly chart
-        var trace1 = {
-            x: btcData, // X-axis (Time)
-            y: priceData, // Y-axis (Price)
-            type: 'scatter'
-        };
-
-        var data = [trace1];
-
-        var layout = {
-            title: 'BTC Price over Time',
-            xaxis: {title: 'Time'},
-            yaxis: {title: 'Price (USD)'}
-        };
-
-        Plotly.newPlot('chart', data, layout);
-    </script>
+    <h1>{{ crypto_id.capitalize() }} Price in {{ currency.upper() }}</h1>
+    <p>The current price of {{ crypto_id }} in {{ currency }} is {{ price }}</p>
+    <a href="{{ url_for('home') }}">Back to Home</a>
 </body>
 </html>

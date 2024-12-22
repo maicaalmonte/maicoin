@@ -24,4 +24,4 @@ def get_price(crypto_id='bitcoin', currency='usd'):
 get_price('dogecoin', 'usd')
 
 # Example usage: Get Ethereum price in EUR
-get_price('dogecoin', 'phd')
+get_price('dogecoin', 'eur')

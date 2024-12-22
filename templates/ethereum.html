@@ -4,61 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ethereum Data</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        console.log('JavaScript is working!');
-    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <h1>Ethereum Data</h1>
-    {% if data %}
-        <div>
-            <canvas id="ethChart"></canvas>
-        </div>
-        <p id="best-buy-time">Best time to buy: Hour {{ best_times.best_buy_hour }}: {{ best_times.lowest_price }} USD (Lowest average price)</p>
-        <p id="best-sell-time">Best time to sell: Hour {{ best_times.best_sell_hour }}: {{ best_times.highest_price }} USD (Highest average price)</p>
-        <script>
-            const ethData = {{ data|tojson }};
-            const ctx = document.getElementById('ethChart').getContext('2d');
-            const ethChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ethData.dates,
-                    datasets: [{
-                        label: 'Ethereum Prices',
-                        data: ethData.prices,
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        borderWidth: 1
-                    }]
-                }
-            });
+    <div>
+        <button onclick="showRealtimeGraph()">Show Real-Time Graph</button>
+        <button onclick="showHistoricalGraph()">Show Historical Graph</button>
+    </div>
+    <div id="graph-container">
+        <img id="realtime-graph" src="{{ url_for('static', filename='img/ethereum_realtime_plot.png') }}" alt="Real-Time Graph" style="display: none;">
+        <img id="historical-graph" src="{{ url_for('static', filename='img/ethereum_historical_plot.png') }}" alt="Historical Graph" style="display: none;">
+    </div>
+    <script>
+        function showRealtimeGraph() {
+            document.getElementById('realtime-graph').style.display = 'block';
+            document.getElementById('historical-graph').style.display = 'none';
+        }
 
-            async function fetchRealTimeData() {
-                try {
-                    const response = await fetch('/realtime_ethereum_data'); // Adjusted route
-                    const realTimeData = await response.json();
-
-                    if (realTimeData && realTimeData.dates && realTimeData.prices) {
-                        ethChart.data.labels = realTimeData.dates;
-                        ethChart.data.datasets[0].data = realTimeData.prices;
-                        ethChart.update();
-
-                        document.getElementById('best-buy-time').textContent =
-                            `Best time to buy: Hour ${realTimeData.best_times.best_buy_hour}: ${realTimeData.best_times.lowest_price} USD (Lowest average price)`;
-                        document.getElementById('best-sell-time').textContent =
-                            `Best time to sell: Hour ${realTimeData.best_times.best_sell_hour}: ${realTimeData.best_times.highest_price} USD (Highest average price)`;
-                    } else {
-                        console.error('Invalid real-time data structure:', realTimeData);
-                    }
-                } catch (error) {
-                    console.error('Error fetching real-time data:', error);
-                }
-            }
-
-            setInterval(fetchRealTimeData, 60000);
-        </script>
-    {% else %}
-        <p>No data available for Ethereum.</p>
-    {% endif %}
+        function showHistoricalGraph() {
+            document.getElementById('realtime-graph').style.display = 'none';
+            document.getElementById('historical-graph').style.display = 'block';
+        }
+    </script>
 </body>
 </html>

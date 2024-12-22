@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptocurrency Prices</title>
+</head>
+<body>
+    <h1>Cryptocurrency Prices</h1>
+    <ul>
+        {% for crypto_id, price in prices.items() %}
+            <li>{{ crypto_id.capitalize() }}: {{ price.usd }} USD</li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('home') }}">Back to Home</a>
+</body>
+</html>

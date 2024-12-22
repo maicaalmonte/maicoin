@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ crypto_id }} Analysis</title>
+</head>
+<body>
+    <h1>{{ crypto_id }} Trading Analysis</h1>
+    <h2>Average Prices by Hour</h2>
+    <ul>
+        {% for hour, price in hourly_avg_prices.items() %}
+            <li>Hour {{ hour }}: {{ price | round(2) }} USD</li>
+        {% endfor %}
+    </ul>
+    <h2>Best Time to Buy</h2>
+    <p>Hour {{ best_buy_hour }}: {{ best_buy_price | round(2) }} USD</p>
+    <h2>Best Time to Sell</h2>
+    <p>Hour {{ best_sell_hour }}: {{ best_sell_price | round(2) }} USD</p>
+</body>
+</html>
