@@ -1,0 +1,15 @@
+{
+  "name": "maicoin",
+  "version": "1.0.0",
+  "description": "Developed the backend infrastructure for a cryptocurrency data-fetching and analysis system using Flask, Python, and APScheduler, with plans to deploy as a fully functional web application. The system fetches and analyzes real-time cryptocurrency data for Bitcoin, Dogecoin, and Ethereum, providing insights on pricing trends.\r ## Installation",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "package.json": "^2.0.1"
+  }
+}
