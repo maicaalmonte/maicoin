@@ -2,14 +2,13 @@ import ccxt
 import pandas as pd
 import requests
 from datetime import datetime, timedelta
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, jsonify, request
 import time
 import plotly.graph_objs as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
 app = Flask(__name__)
-
 
 # Function to fetch data with retries for exchanges
 def fetch_data_with_retry(exchange, symbol, timeframe, limit=100):
@@ -25,7 +24,6 @@ def fetch_data_with_retry(exchange, symbol, timeframe, limit=100):
             else:
                 print("Max retries reached for fetching data.")
                 return None
-
 
 # Function to fetch data from CoinGecko with retries and rate limit handling
 def fetch_data_with_retry_coingecko(url, params, retries=5):
@@ -57,7 +55,6 @@ def fetch_data_with_retry_coingecko(url, params, retries=5):
             else:
                 print("Max retries reached. Could not fetch data.")
                 return None
-
 
 # Function to analyze the best trading opportunities
 def analyze_trading_opportunities(data):
@@ -100,7 +97,6 @@ def analyze_trading_opportunities(data):
     else:
         return None
 
-
 # Function to fetch 100-day historical data from CryptoCompare
 def fetch_100_day_historical_data(symbol, currency='USD'):
     url = "https://min-api.cryptocompare.com/data/v2/histoday"
@@ -109,14 +105,15 @@ def fetch_100_day_historical_data(symbol, currency='USD'):
         'tsym': currency,
         'limit': 100  # Last 100 days
     }
+    print(f"Fetching 100-day historical data for {symbol}...")
     response = requests.get(url, params=params)
     data = response.json()
     if data.get('Response') == 'Success':
+        print("100-day historical data fetched successfully!")
         return data['Data']['Data']
     else:
-        print(f"Failed to fetch 100-day historical data for {symbol}")
+        print(f"Failed to fetch 100-day historical data for {symbol}: {data}")
         return []
-
 
 # Function to generate Plotly graph for historical data
 def plot_historical_data(prices, title):
@@ -125,7 +122,6 @@ def plot_historical_data(prices, title):
     fig = px.line(df, x='date', y='price', title=title)
     return fig.to_html(full_html=False)
 
-
 # Function to generate Plotly graph for 100-day historical data
 def plot_100_day_historical_data(data, title):
     df = pd.DataFrame(data)
@@ -133,8 +129,8 @@ def plot_100_day_historical_data(data, title):
         df['time'] = pd.to_datetime(df['time'], unit='s')
         fig = px.line(df, x='time', y='close', title=title)
         return fig.to_html(full_html=False)
+    print("No 'time' column found in 100-day historical data.")
     return "<p>100-Day historical data not available.</p>"
-
 
 # Function to generate Plotly graph for real-time data
 def plot_realtime_data(exchange_name, symbol, timeframe):
@@ -154,6 +150,18 @@ def plot_realtime_data(exchange_name, symbol, timeframe):
         return fig.to_html(full_html=False)
     return "<p>No real-time data available.</p>"
 
+# Function to get current price from CoinGecko
+def get_current_price(symbol, currency):
+    url = f"https://api.coingecko.com/api/v3/simple/price"
+    params = {
+        'ids': symbol,
+        'vs_currencies': currency
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
+    if symbol in data and currency in data[symbol]:
+        return data[symbol][currency]
+    return None
 
 # Define the time range (e.g., last 48 hours)
 end_time = int(datetime.now().timestamp())
@@ -178,7 +186,6 @@ urls_params = [
     }
 ]
 
-
 @app.route('/')
 def index():
     results = []
@@ -195,6 +202,7 @@ def index():
 
             # Fetch and plot 100-day historical data
             symbol = 'BTC' if currency_name.lower() == 'bitcoin' else currency_name.upper()
+            print(f"Fetching 100-day historical data for {currency_name} with symbol {symbol}...")
             historical_100_day_data = fetch_100_day_historical_data(symbol)
             historical_100_day_graph = plot_100_day_historical_data(historical_100_day_data,
                                                                     f'{currency_name} 100-Day Historical Data')
@@ -224,6 +232,18 @@ def index():
             width: 90%;
             margin: 0 auto;
           }
+          button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+          }
+          button:hover {
+            background-color: #555;
+          }
           table {
             width: 100%;
             border-collapse: collapse;
@@ -246,12 +266,36 @@ def index():
             margin: 20px 0;
           }
         </style>
+        <script>
+          function fetchCurrentPrice() {
+            const symbol = document.getElementById('crypto-symbol').value;
+            const currency = document.getElementById('currency').value;
+            fetch('/get_current_price/' + symbol + '/' + currency)
+              .then(response => response.json())
+              .then(data => {
+                let priceDiv = document.getElementById('price-display');
+                if (data.price !== null) {
+                  priceDiv.innerHTML = '<h3>Current ' + symbol + ' Price in ' + currency + ': ' + data.price + '</h3>';
+                } else {
+                  priceDiv.innerHTML = '<h3>Price data not available for ' + symbol + ' in ' + currency + '</h3>';
+                }
+              });
+          }
+        </script>
       </head>
       <body>
         <div class="container">
           <h1>Cryptocurrency Data</h1>
-          <p> This is just for fun hihi😂. Just trying to learn web development lol!<p>
-          <p> However, the data were sourced through the APIs of respective crypto exchanges, ensuring they are factual.🤗<p>
+          <p>This is just for fun hihi😂. Just trying to learn web development lol!</p>
+          <p>However, the data were sourced through the APIs of respective crypto exchanges, ensuring they are factual.🤗</p>
+          <form onsubmit="event.preventDefault(); fetchCurrentPrice();">
+            <label for="crypto-symbol">Cryptocurrency Symbol (e.g., bitcoin, ethereum, dogecoin):</label>
+            <input type="text" id="crypto-symbol" name="crypto-symbol" required>
+            <label for="currency">Currency (e.g., usd, eur, php):</label>
+            <input type="text" id="currency" name="currency" required>
+            <button type="submit">Get Price</button>
+          </form>
+          <div id="price-display"></div>
           <table>
             <tr>
               <th>Currency</th>
@@ -292,6 +336,10 @@ def index():
     """
     return render_template_string(html_content, results=results)
 
+@app.route('/get_current_price/<string:symbol>/<string:currency>')
+def get_current_price_route(symbol, currency):
+    price = get_current_price(symbol, currency)
+    return jsonify({'price': price})
 
 if __name__ == "__main__":
     app.run(port=5000)
