@@ -3,20 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Data</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <title>{{ data.title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #333;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background-color: #fff;
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to Crypto Data</h1>
-    <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="/bitcoin">Bitcoin Data</a></li>
-        <li><a href="/dogecoin">Dogecoin Data</a></li>
-        <li><a href="/ethereum">Ethereum Data</a></li>
-        <li><a href="/crypto-analysis">Crypto Analysis</a></li>
-        <li><a href="/prices">Real-time Prices</a></li>
-    </ul>
-    <img src="{{ url_for('static', filename='img/index_plot.png') }}" alt="Image">
+    <h1>{{ data.title }}</h1>
+
+    <!-- Display the welcome message -->
+    {% if data.message %}
+        <p>{{ data.message }}</p>
+
+    <!-- Display the plot and price -->
+    {% elif data.plot_url %}
+        <img src="{{ data.plot_url }}" alt="{{ data.title }} chart">
+        <p><strong>Current Price:</strong> {{ data.price }}</p>
+
+    <!-- Display analysis results -->
+    {% elif data.analysis_results %}
+        <h2>Analysis Results</h2>
+        <ul>
+            {% for result in data.analysis_results %}
+                <li>{{ result }}</li>
+            {% endfor %}
+        </ul>
+
+    <!-- Display a list of prices -->
+    {% elif data.prices %}
+        <h2>Prices</h2>
+        <ul>
+            {% for price in data.prices %}
+                <li>{{ price.name }}: {{ price.value }}</li>
+            {% endfor %}
+        </ul>
+
+    <!-- Fallback for no data -->
+    {% else %}
+        <p>No data available at this time. Please try again later.</p>
+    {% endif %}
 </body>
 </html>
