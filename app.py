@@ -7,6 +7,7 @@ import time
 import plotly.graph_objs as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+import pytz
 
 app = Flask(__name__)
 
@@ -163,6 +164,66 @@ def get_current_price(symbol, currency):
         return data[symbol][currency]
     return None
 
+# Function to fetch real-time data for a coin from CoinGecko API with timezone conversion
+def fetch_real_time_data(coin_id, currency, start_time, end_time):
+    url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart/range"
+    params = {
+        "vs_currency": currency,
+        "from": int(start_time.timestamp()),
+        "to": int(end_time.timestamp())
+    }
+    response = requests.get(url, params=params)
+
+    if response.status_code != 200:
+        print("Failed to fetch data from CoinGecko API")
+        return pd.DataFrame()  # Return empty DataFrame if request failed
+
+    data = response.json()
+    if 'prices' not in data:
+        print("No 'prices' in API response")
+        return pd.DataFrame()  # Return empty DataFrame if no prices
+
+    prices = data['prices']  # [timestamp, price]
+    df = pd.DataFrame(prices, columns=['timestamp', 'price'])
+    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms').dt.tz_localize('UTC').dt.tz_convert('Asia/Manila')
+
+    return df
+
+# Function to analyze the best times to buy and sell for each 30-minute interval
+def analyze_best_times(df):
+    results = []
+    intervals = pd.date_range(start=df['timestamp'].min(), end=df['timestamp'].max(), freq='30min')
+
+    for i in range(len(intervals) - 1):
+        interval_df = df[(df['timestamp'] >= intervals[i]) & (df['timestamp'] < intervals[i + 1])]
+        if interval_df.empty:
+            continue
+
+        best_result = None
+        for j in range(len(interval_df) - 1):
+            buy_price = interval_df.iloc[j]['price']
+            buy_time = interval_df.iloc[j]['timestamp']
+
+            for k in range(j + 1, len(interval_df)):
+                sell_price = interval_df.iloc[k]['price']
+                sell_time = interval_df.iloc[k]['timestamp']
+                profit = sell_price - buy_price
+
+                if best_result is None or profit > best_result['Profit ($)']:
+                    best_result = {
+                        'Interval Start': intervals[i],
+                        'Buy Time': buy_time,
+                        'Buy Price ($)': buy_price,
+                        'Sell Time': sell_time,
+                        'Sell Price ($)': sell_price,
+                        'Profit ($)': profit
+                    }
+
+        if best_result:
+            results.append(best_result)
+
+    return pd.DataFrame(results)
+
 # Define the time range (e.g., last 48 hours)
 end_time = int(datetime.now().timestamp())
 start_time = end_time - 48 * 3600  # Last 48 hours
@@ -281,13 +342,31 @@ def index():
                 }
               });
           }
+
+          function fetch30MinEstimate(coin_id) {
+            fetch('/get_30min_estimate/' + coin_id)
+              .then(response => response.json())
+              .then(data => {
+                let estimateDiv = document.getElementById('estimate-display');
+                if (data.estimates) {
+                  let table = '<table><tr><th>Interval Start</th><th>Buy Time</th><th>Buy Price ($)</th><th>Sell Time</th><th>Sell Price ($)</th><th>Profit ($)</th></tr>';
+                  data.estimates.forEach(row => {
+                    table += `<tr><td>${row['Interval Start']}</td><td>${row['Buy Time']}</td><td>${row['Buy Price ($)']}</td><td>${row['Sell Time']}</td><td>${row['Sell Price ($)']}</td><td>${row['Profit ($)']}</td></tr>`;
+                  });
+                  table += '</table>';
+                  estimateDiv.innerHTML = table;
+                } else {
+                  estimateDiv.innerHTML = '<p>No 30-minute interval estimates available.</p>';
+                }
+              });
+          }
         </script>
       </head>
       <body>
         <div class="container">
-          <h1>Cryptocurrency Data</h1>
-          <p>This is just for fun hihi😂. Just trying to learn web development lol!</p>
-          <p>However, the data were sourced through the APIs of respective crypto exchanges, ensuring they are factual.🤗</p>
+          <h1>"CRYPTOCURRENCY"</h1>
+            </p>Data Analysis and Visualization</p>
+            <p> Bitcoin, Ethereum, and Dogecoin<p>
           <form onsubmit="event.preventDefault(); fetchCurrentPrice();">
             <label for="crypto-symbol">Cryptocurrency Symbol (e.g., bitcoin, ethereum, dogecoin):</label>
             <input type="text" id="crypto-symbol" name="crypto-symbol" required>
@@ -300,6 +379,7 @@ def index():
             <tr>
               <th>Currency</th>
               <th>Best Trading Analysis</th>
+              <th>30-Minute Interval Estimate</th>
             </tr>
             {% for result in results %}
             <tr>
@@ -313,9 +393,13 @@ def index():
                   <p>No profitable trading opportunities found.</p>
                 {% endif %}
               </td>
+              <td>
+                <button onclick="fetch30MinEstimate('{{ result.currency_name.lower() }}')">Get 30-Minute Estimate</button>
+              </td>
             </tr>
             {% endfor %}
           </table>
+          <div id="estimate-display"></div>
           {% for result in results %}
             <div class="graph">
               <h2>{{ result.currency_name }} Real-time Price</h2>
@@ -340,6 +424,19 @@ def index():
 def get_current_price_route(symbol, currency):
     price = get_current_price(symbol, currency)
     return jsonify({'price': price})
+
+@app.route('/get_30min_estimate/<string:coin_id>')
+def get_30min_estimate(coin_id):
+    currency = "usd"  # Use USD for pricing
+    end_time = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Asia/Manila'))
+    start_time = end_time - timedelta(days=1)
+
+    df = fetch_real_time_data(coin_id, currency, start_time, end_time)
+    if not df.empty:
+        estimates_df = analyze_best_times(df)
+        return jsonify({'estimates': estimates_df.to_dict(orient='records')})
+    else:
+        return jsonify({'estimates': None})
 
 if __name__ == "__main__":
     app.run(port=5000)
